@@ -13,8 +13,7 @@
           "type": "string"
         }
       },
-      "type": "object",
-      "additionalProperties": false
+      "type": "object"
     },
     "spec": {
       "properties": {
