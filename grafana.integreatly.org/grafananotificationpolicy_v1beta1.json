@@ -1,5 +1,5 @@
 {
-  "description": "GrafanaFolder is the Schema for the grafanafolders API",
+  "description": "GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy API",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -13,14 +13,10 @@
       "type": "object"
     },
     "spec": {
-      "description": "GrafanaFolderSpec defines the desired state of GrafanaFolder",
+      "description": "GrafanaNotificationPolicySpec defines the desired state of GrafanaNotificationPolicy",
       "properties": {
-        "allowCrossNamespaceImport": {
-          "description": "Enable matching Grafana instances outside the current namespace",
-          "type": "boolean"
-        },
         "instanceSelector": {
-          "description": "Selects Grafanas for import",
+          "description": "selects Grafanas for import",
           "properties": {
             "matchExpressions": {
               "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
@@ -72,63 +68,120 @@
           ],
           "additionalProperties": false
         },
-        "parentFolderRef": {
-          "description": "Reference to an existing GrafanaFolder CR in the same namespace",
-          "type": "string"
-        },
-        "parentFolderUID": {
-          "description": "UID of the folder in which the current folder should be created",
-          "type": "string"
-        },
-        "permissions": {
-          "description": "Raw json with folder permissions, potentially exported from Grafana",
-          "type": "string"
-        },
         "resyncPeriod": {
-          "default": "5m",
-          "description": "How often the folder is synced, defaults to 5m if not set",
+          "default": "10m",
           "format": "duration",
           "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|\u00b5s|ms|s|m|h))+$",
           "type": "string"
         },
-        "title": {
-          "description": "Display name of the folder in Grafana",
-          "type": "string"
-        },
-        "uid": {
-          "description": "Manually specify the UID the Folder is created with",
-          "type": "string",
-          "x-kubernetes-validations": [
-            {
-              "message": "spec.uid is immutable",
-              "rule": "self == oldSelf"
+        "route": {
+          "description": "Routes for alerts to match against",
+          "properties": {
+            "continue": {
+              "description": "continue",
+              "type": "boolean"
+            },
+            "group_by": {
+              "description": "group by",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "group_interval": {
+              "description": "group interval",
+              "type": "string"
+            },
+            "group_wait": {
+              "description": "group wait",
+              "type": "string"
+            },
+            "match_re": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "match re",
+              "type": "object"
+            },
+            "matchers": {
+              "description": "matchers",
+              "items": {
+                "properties": {
+                  "isEqual": {
+                    "description": "is equal",
+                    "type": "boolean"
+                  },
+                  "isRegex": {
+                    "description": "is regex",
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "description": "name",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "value",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "isRegex",
+                  "value"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              },
+              "type": "array"
+            },
+            "mute_time_intervals": {
+              "description": "mute time intervals",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "object_matchers": {
+              "description": "object matchers",
+              "items": {
+                "description": "ObjectMatcher ObjectMatcher is a matcher that can be used to filter alerts.\n\nswagger:model ObjectMatcher",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "provenance": {
+              "description": "provenance",
+              "type": "string"
+            },
+            "receiver": {
+              "description": "receiver",
+              "type": "string"
+            },
+            "repeat_interval": {
+              "description": "repeat interval",
+              "type": "string"
+            },
+            "routes": {
+              "description": "routes",
+              "x-kubernetes-preserve-unknown-fields": true
             }
-          ]
+          },
+          "type": "object",
+          "additionalProperties": false
         }
       },
       "required": [
-        "instanceSelector"
+        "instanceSelector",
+        "route"
       ],
       "type": "object",
-      "x-kubernetes-validations": [
-        {
-          "message": "Only one of parentFolderUID or parentFolderRef can be set",
-          "rule": "(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID)))"
-        },
-        {
-          "message": "spec.uid is immutable",
-          "rule": "((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))"
-        }
-      ],
       "additionalProperties": false
     },
     "status": {
-      "description": "GrafanaFolderStatus defines the observed state of GrafanaFolder",
+      "description": "GrafanaNotificationPolicyStatus defines the observed state of GrafanaNotificationPolicy",
       "properties": {
-        "NoMatchingInstances": {
-          "description": "The folder instanceSelector can't find matching grafana instances",
-          "type": "boolean"
-        },
         "conditions": {
           "items": {
             "description": "Condition contains details for one aspect of the current state of this API Resource.",
@@ -183,17 +236,11 @@
             "additionalProperties": false
           },
           "type": "array"
-        },
-        "hash": {
-          "description": "INSERT ADDITIONAL STATUS FIELD - define observed state of cluster\nImportant: Run \"make\" to regenerate code after modifying this file",
-          "type": "string"
-        },
-        "lastResync": {
-          "description": "Last time the folder was resynced",
-          "format": "date-time",
-          "type": "string"
         }
       },
+      "required": [
+        "conditions"
+      ],
       "type": "object",
       "additionalProperties": false
     }
