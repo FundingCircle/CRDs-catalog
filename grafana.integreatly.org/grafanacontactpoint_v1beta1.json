@@ -1,5 +1,5 @@
 {
-  "description": "GrafanaFolder is the Schema for the grafanafolders API",
+  "description": "GrafanaContactPoint is the Schema for the grafanacontactpoints API",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -13,14 +13,16 @@
       "type": "object"
     },
     "spec": {
-      "description": "GrafanaFolderSpec defines the desired state of GrafanaFolder",
+      "description": "GrafanaContactPointSpec defines the desired state of GrafanaContactPoint",
       "properties": {
         "allowCrossNamespaceImport": {
-          "description": "Enable matching Grafana instances outside the current namespace",
+          "type": "boolean"
+        },
+        "disableResolveMessage": {
           "type": "boolean"
         },
         "instanceSelector": {
-          "description": "Selects Grafanas for import",
+          "description": "selects Grafanas for import",
           "properties": {
             "matchExpressions": {
               "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
@@ -72,64 +74,129 @@
           ],
           "additionalProperties": false
         },
-        "parentFolderRef": {
-          "description": "Reference to an existing GrafanaFolder CR in the same namespace",
-          "type": "string"
-        },
-        "parentFolderUID": {
-          "description": "UID of the folder in which the current folder should be created",
-          "type": "string"
-        },
-        "permissions": {
-          "description": "Raw json with folder permissions, potentially exported from Grafana",
+        "name": {
           "type": "string"
         },
         "resyncPeriod": {
-          "default": "5m",
-          "description": "How often the folder is synced, defaults to 5m if not set",
+          "default": "10m",
           "format": "duration",
           "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|\u00b5s|ms|s|m|h))+$",
           "type": "string"
         },
-        "title": {
-          "description": "Display name of the folder in Grafana",
+        "settings": {
+          "x-kubernetes-preserve-unknown-fields": true
+        },
+        "type": {
+          "enum": [
+            "alertmanager",
+            "prometheus-alertmanager",
+            "dingding",
+            "discord",
+            "email",
+            "googlechat",
+            "kafka",
+            "line",
+            "opsgenie",
+            "pagerduty",
+            "pushover",
+            "sensugo",
+            "sensu",
+            "slack",
+            "teams",
+            "telegram",
+            "threema",
+            "victorops",
+            "webhook",
+            "wecom",
+            "hipchat",
+            "oncall"
+          ],
           "type": "string"
         },
-        "uid": {
-          "description": "Manually specify the UID the Folder is created with",
-          "type": "string",
-          "x-kubernetes-validations": [
-            {
-              "message": "spec.uid is immutable",
-              "rule": "self == oldSelf"
-            }
-          ]
+        "valuesFrom": {
+          "items": {
+            "properties": {
+              "targetPath": {
+                "type": "string"
+              },
+              "valueFrom": {
+                "properties": {
+                  "configMapKeyRef": {
+                    "description": "Selects a key of a ConfigMap.",
+                    "properties": {
+                      "key": {
+                        "description": "The key to select.",
+                        "type": "string"
+                      },
+                      "name": {
+                        "default": "",
+                        "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                        "type": "string"
+                      },
+                      "optional": {
+                        "description": "Specify whether the ConfigMap or its key must be defined",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "key"
+                    ],
+                    "type": "object",
+                    "x-kubernetes-map-type": "atomic",
+                    "additionalProperties": false
+                  },
+                  "secretKeyRef": {
+                    "description": "Selects a key of a Secret.",
+                    "properties": {
+                      "key": {
+                        "description": "The key of the secret to select from.  Must be a valid secret key.",
+                        "type": "string"
+                      },
+                      "name": {
+                        "default": "",
+                        "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                        "type": "string"
+                      },
+                      "optional": {
+                        "description": "Specify whether the Secret or its key must be defined",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "key"
+                    ],
+                    "type": "object",
+                    "x-kubernetes-map-type": "atomic",
+                    "additionalProperties": false
+                  }
+                },
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "targetPath",
+              "valueFrom"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array"
         }
       },
       "required": [
-        "instanceSelector"
+        "instanceSelector",
+        "name",
+        "settings"
       ],
       "type": "object",
-      "x-kubernetes-validations": [
-        {
-          "message": "Only one of parentFolderUID or parentFolderRef can be set",
-          "rule": "(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID)))"
-        },
-        {
-          "message": "spec.uid is immutable",
-          "rule": "((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))"
-        }
-      ],
       "additionalProperties": false
     },
     "status": {
-      "description": "GrafanaFolderStatus defines the observed state of GrafanaFolder",
+      "description": "GrafanaContactPointStatus defines the observed state of GrafanaContactPoint",
       "properties": {
-        "NoMatchingInstances": {
-          "description": "The folder instanceSelector can't find matching grafana instances",
-          "type": "boolean"
-        },
         "conditions": {
+          "description": "INSERT ADDITIONAL STATUS FIELD - define observed state of cluster\nImportant: Run \"make\" to regenerate code after modifying this file",
           "items": {
             "description": "Condition contains details for one aspect of the current state of this API Resource.",
             "properties": {
@@ -183,17 +250,11 @@
             "additionalProperties": false
           },
           "type": "array"
-        },
-        "hash": {
-          "description": "INSERT ADDITIONAL STATUS FIELD - define observed state of cluster\nImportant: Run \"make\" to regenerate code after modifying this file",
-          "type": "string"
-        },
-        "lastResync": {
-          "description": "Last time the folder was resynced",
-          "format": "date-time",
-          "type": "string"
         }
       },
+      "required": [
+        "conditions"
+      ],
       "type": "object",
       "additionalProperties": false
     }

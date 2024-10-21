@@ -1,5 +1,5 @@
 {
-  "description": "GrafanaFolder is the Schema for the grafanafolders API",
+  "description": "GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups API",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -13,14 +13,21 @@
       "type": "object"
     },
     "spec": {
-      "description": "GrafanaFolderSpec defines the desired state of GrafanaFolder",
+      "description": "GrafanaAlertRuleGroupSpec defines the desired state of GrafanaAlertRuleGroup",
       "properties": {
         "allowCrossNamespaceImport": {
-          "description": "Enable matching Grafana instances outside the current namespace",
           "type": "boolean"
         },
+        "folderRef": {
+          "description": "Match GrafanaFolders CRs to infer the uid",
+          "type": "string"
+        },
+        "folderUID": {
+          "description": "UID of the folder containing this rule group\nOverrides the FolderSelector",
+          "type": "string"
+        },
         "instanceSelector": {
-          "description": "Selects Grafanas for import",
+          "description": "selects Grafanas for import",
           "properties": {
             "matchExpressions": {
               "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
@@ -72,63 +79,177 @@
           ],
           "additionalProperties": false
         },
-        "parentFolderRef": {
-          "description": "Reference to an existing GrafanaFolder CR in the same namespace",
-          "type": "string"
-        },
-        "parentFolderUID": {
-          "description": "UID of the folder in which the current folder should be created",
-          "type": "string"
-        },
-        "permissions": {
-          "description": "Raw json with folder permissions, potentially exported from Grafana",
-          "type": "string"
-        },
-        "resyncPeriod": {
-          "default": "5m",
-          "description": "How often the folder is synced, defaults to 5m if not set",
-          "format": "duration",
+        "interval": {
           "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|\u00b5s|ms|s|m|h))+$",
           "type": "string"
         },
-        "title": {
-          "description": "Display name of the folder in Grafana",
+        "resyncPeriod": {
+          "default": "10m",
+          "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|\u00b5s|ms|s|m|h))+$",
           "type": "string"
         },
-        "uid": {
-          "description": "Manually specify the UID the Folder is created with",
-          "type": "string",
-          "x-kubernetes-validations": [
-            {
-              "message": "spec.uid is immutable",
-              "rule": "self == oldSelf"
-            }
-          ]
+        "rules": {
+          "items": {
+            "description": "AlertRule defines a specific rule to be evaluated. It is based on the upstream model with some k8s specific type mappings",
+            "properties": {
+              "annotations": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "condition": {
+                "type": "string"
+              },
+              "data": {
+                "items": {
+                  "properties": {
+                    "datasourceUid": {
+                      "description": "Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.",
+                      "type": "string"
+                    },
+                    "model": {
+                      "description": "JSON is the raw JSON query and includes the above properties as well as custom properties.",
+                      "x-kubernetes-preserve-unknown-fields": true
+                    },
+                    "queryType": {
+                      "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
+                      "type": "string"
+                    },
+                    "refId": {
+                      "description": "RefID is the unique identifier of the query, set by the frontend call.",
+                      "type": "string"
+                    },
+                    "relativeTimeRange": {
+                      "description": "relative time range",
+                      "properties": {
+                        "from": {
+                          "description": "from",
+                          "format": "int64",
+                          "type": "integer"
+                        },
+                        "to": {
+                          "description": "to",
+                          "format": "int64",
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object",
+                      "additionalProperties": false
+                    }
+                  },
+                  "type": "object",
+                  "additionalProperties": false
+                },
+                "type": "array"
+              },
+              "execErrState": {
+                "enum": [
+                  "OK",
+                  "Alerting",
+                  "Error",
+                  "KeepLast"
+                ],
+                "type": "string"
+              },
+              "for": {
+                "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|\u00b5s|ms|s|m|h))+$",
+                "type": "string"
+              },
+              "isPaused": {
+                "type": "boolean"
+              },
+              "labels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "noDataState": {
+                "enum": [
+                  "Alerting",
+                  "NoData",
+                  "OK",
+                  "KeepLast"
+                ],
+                "type": "string"
+              },
+              "notificationSettings": {
+                "properties": {
+                  "group_by": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "group_interval": {
+                    "type": "string"
+                  },
+                  "group_wait": {
+                    "type": "string"
+                  },
+                  "mute_time_intervals": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "receiver": {
+                    "type": "string"
+                  },
+                  "repeat_interval": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "receiver"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              },
+              "title": {
+                "example": "Always firing",
+                "maxLength": 190,
+                "minLength": 1,
+                "type": "string"
+              },
+              "uid": {
+                "pattern": "^[a-zA-Z0-9-_]+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "condition",
+              "data",
+              "execErrState",
+              "for",
+              "noDataState",
+              "title",
+              "uid"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array"
         }
       },
       "required": [
-        "instanceSelector"
+        "instanceSelector",
+        "interval",
+        "rules"
       ],
       "type": "object",
       "x-kubernetes-validations": [
         {
-          "message": "Only one of parentFolderUID or parentFolderRef can be set",
-          "rule": "(has(self.parentFolderUID) && !(has(self.parentFolderRef))) || (has(self.parentFolderRef) && !(has(self.parentFolderUID))) || !(has(self.parentFolderRef) && (has(self.parentFolderUID)))"
-        },
-        {
-          "message": "spec.uid is immutable",
-          "rule": "((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))"
+          "message": "Only one of FolderUID or FolderRef can be set",
+          "rule": "(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID)))"
         }
       ],
       "additionalProperties": false
     },
     "status": {
-      "description": "GrafanaFolderStatus defines the observed state of GrafanaFolder",
+      "description": "GrafanaAlertRuleGroupStatus defines the observed state of GrafanaAlertRuleGroup",
       "properties": {
-        "NoMatchingInstances": {
-          "description": "The folder instanceSelector can't find matching grafana instances",
-          "type": "boolean"
-        },
         "conditions": {
           "items": {
             "description": "Condition contains details for one aspect of the current state of this API Resource.",
@@ -183,17 +304,11 @@
             "additionalProperties": false
           },
           "type": "array"
-        },
-        "hash": {
-          "description": "INSERT ADDITIONAL STATUS FIELD - define observed state of cluster\nImportant: Run \"make\" to regenerate code after modifying this file",
-          "type": "string"
-        },
-        "lastResync": {
-          "description": "Last time the folder was resynced",
-          "format": "date-time",
-          "type": "string"
         }
       },
+      "required": [
+        "conditions"
+      ],
       "type": "object",
       "additionalProperties": false
     }
