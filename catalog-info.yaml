@@ -1,9 +1,9 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  description: ''
+  description: Custom Resource Definitions catalog
   name: crds-catalog
 spec:
-  lifecycle: non-production
+  lifecycle: production
   owner: group:team/cloud-platform
   type: undefined
