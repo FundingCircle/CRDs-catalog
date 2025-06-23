@@ -1,9 +1,9 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  description: Catalog for CRDs not in https://github.com/datreeio/CRDs-catalog.
+  description: ''
   name: crds-catalog
 spec:
-  lifecycle: production
+  lifecycle: non-production
   owner: group:team/cloud-platform
-  type: infrastructure
+  type: undefined
